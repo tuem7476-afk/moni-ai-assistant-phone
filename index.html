@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>我的AI助手</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; }
+        .user { background: #e3f2fd; padding: 8px; margin: 5px; border-radius: 10px; }
+        .ai { background: #f5f5f5; padding: 8px; margin: 5px; border-radius: 10px; }
+        input { width: 70%; padding: 10px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h2>🤖 我的AI助手</h2>
+    <div id="chat">
+        <div class="ai">你好！我是你的AI助手。有什么可以帮你的吗？</div>
+    </div>
+    <div>
+        <input type="text" id="input" placeholder="输入问题...">
+        <button onclick="sendMessage()">发送</button>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('input');
+            const chat = document.getElementById('chat');
+            const message = input.value;
+            
+            // 显示用户消息
+            const userMsg = document.createElement('div');
+            userMsg.className = 'user';
+            userMsg.textContent = '👤 ' + message;
+            chat.appendChild(userMsg);
+            
+            input.value = '';
+            
+            // 显示AI回复（暂时是模拟的）
+            setTimeout(() => {
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'ai';
+                aiMsg.textContent = '🤖 我已经收到你的消息了！现在需要设置API密钥才能真的回答。';
+                chat.appendChild(aiMsg);
+                chat.scrollTop = chat.scrollHeight;
+            }, 500);
+        }
+        
+        // 按回车发送
+        document.getElementById('input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
