@@ -3,170 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>樊祝知的秘密空间</title>
+    <title>Juemeng's WebOS</title>
     <style>
-        /* 核心修复：锁定屏幕 */
-        * { box-sizing: border-box; transition: all 0.3s ease; }
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #2c3e50; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { height: 100%; margin: 0; overflow: hidden; font-family: -apple-system, sans-serif; background: #000; }
         
-        /* 手机容器 */
-        #phone { 
-            display: flex; flex-direction: column; 
-            width: 100vw; height: 100%; 
-            max-width: 450px; margin: 0 auto; 
-            background: #ededed; position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        #phone-container {
+            width: 100vw; height: 100%; max-width: 450px; margin: 0 auto;
+            position: relative; background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000') center/cover;
+            display: flex; flex-direction: column;
         }
 
-        /* 顶部云朵装饰栏 */
-        .top-panel { 
-            padding: 20px 15px 10px; 
-            background: linear-gradient(to bottom, #a1c4fd 0%, #c2e9fb 100%);
-            border-bottom-left-radius: 25px;
-            border-bottom-right-radius: 25px;
+        /* 顶部云朵时间 */
+        .status-bar { padding: 40px 20px 20px; text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        #time { font-size: 50px; font-weight: 200; }
+        #date { font-size: 16px; opacity: 0.8; }
+
+        /* 桌面图标网格 */
+        .app-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; padding: 20px;
+            flex: 1; align-content: start;
         }
-        
-        .cloud-section {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(5px);
-            padding: 15px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        .app-icon { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .icon-box { 
+            width: 60px; height: 60px; border-radius: 14px; margin-bottom: 8px;
+            display: flex; align-items: center; justify-content: center; font-size: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); backdrop-filter: blur(10px);
         }
+        .app-label { color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 
-        .time-info .time { font-size: 24px; font-weight: bold; color: #333; display: block; }
-        .time-info .date { font-size: 12px; color: #666; }
-        .weather-info { text-align: right; font-size: 13px; color: #444; }
-
-        /* 标题栏 */
-        .header { padding: 8px; text-align: center; font-size: 14px; color: #888; background: #ededed; }
-
-        /* 聊天区域 */
-        #chat { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-
-        /* 微信 Vibe 气泡 */
-        .msg { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 16px; line-height: 1.5; position: relative; }
-        .ai { align-self: flex-start; background: #fff; color: #000; border: 0.5px solid #ddd; }
-        .ai::before { content: ""; position: absolute; left: -10px; top: 10px; border: 5px solid transparent; border-right-color: #fff; }
-        
-        .user { align-self: flex-end; background: #95ec69; color: #000; border: 0.5px solid #84d45d; }
-        .user::before { content: ""; position: absolute; right: -10px; top: 10px; border: 5px solid transparent; border-left-color: #95ec69; }
-
-        /* 底部输入框 */
-        .footer { 
-            padding: 10px; background: #f7f7f7; border-top: 1px solid #ddd;
-            display: flex; gap: 8px; 
-            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
+        /* App 窗口层 */
+        .app-window {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ededed; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100; display: flex; flex-direction: column;
         }
-        input { flex: 1; border: none; padding: 10px; border-radius: 4px; font-size: 16px; outline: none; background: #fff; }
-        button { background: #07c160; color: white; border: none; padding: 0 20px; border-radius: 4px; font-weight: bold; }
+        .app-window.active { transform: translateY(0); }
         
-        /* 正在输入状态 */
-        #typing { font-size: 12px; color: #07c160; margin-left: 10px; display: none; }
+        /* 虚拟返回键 */
+        .home-indicator {
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 5px; background: rgba(255,255,255,0.5); border-radius: 5px;
+            z-index: 1000; cursor: pointer;
+        }
+        .app-window .home-indicator { background: rgba(0,0,0,0.2); }
+
+        /* 聊天界面简易样式 */
+        .app-header { padding: 15px; background: #f7f7f7; text-align: center; font-weight: bold; border-bottom: 1px solid #ddd; }
+        .chat-content { flex: 1; padding: 15px; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-<div id="phone">
-    <div class="top-panel">
-        <div class="cloud-section">
-            <div class="time-info">
-                <span class="time" id="realTime">00:00</span>
-                <span class="date" id="realDate">3月17日 星期二</span>
-            </div>
-            <div class="weather-info">
-                <div>📍 正在定位...</div>
-                <div>☁️ 多云转晴 22°C</div>
-            </div>
+<div id="phone-container">
+    <div class="status-bar">
+        <div id="time">00:00</div>
+        <div id="date">3月18日 星期三</div>
+    </div>
+
+    <div class="app-grid">
+        <div class="app-icon" onclick="openApp('wechat')">
+            <div class="icon-box" style="background: #07c160;">💬</div>
+            <div class="app-label">微信</div>
+        </div>
+        <div class="app-icon" onclick="openApp('qq')">
+            <div class="icon-box" style="background: #12b7f5;">🐧</div>
+            <div class="app-label">QQ</div>
+        </div>
+        <div class="app-icon" onclick="openApp('settings')">
+            <div class="icon-box" style="background: #95a5a6;">⚙️</div>
+            <div class="app-label">设置</div>
         </div>
     </div>
 
-    <div class="header">樊祝知 <span id="typing">正在输入...</span></div>
-    
-    <div id="chat">
-        <div class="msg ai">（他坐在窗边，合上手中的书，抬头看向你）<br>虽然只是简陋的初见，但既然你打开了这个窗口，想必是有什么困惑需要我解答？</div>
+    <div id="wechat" class="app-window">
+        <div class="app-header">樊祝知</div>
+        <div class="chat-content">
+            <p style="color:#888; text-align:center; font-size:12px;">这里就是你之前玩的聊天界面...</p>
+        </div>
+        <div class="home-indicator" onclick="closeApp()"></div>
     </div>
 
-    <div class="footer">
-        <input type="text" id="userInput" placeholder="发送消息..." onkeypress="if(event.keyCode==13) handleSend()">
-        <button onclick="handleSend()">发送</button>
+    <div id="settings" class="app-window" style="background: #fff;">
+        <div class="app-header">系统设置</div>
+        <div style="padding: 20px;">
+            <label>API Key (DeepSeek):</label>
+            <input type="password" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:5px;">
+            <button style="width:100%; padding:10px; background:#07c160; color:white; border:none; border-radius:5px;">保存配置</button>
+        </div>
+        <div class="home-indicator" onclick="closeApp()"></div>
     </div>
+
+    <div class="home-indicator" onclick="closeApp()"></div>
 </div>
 
 <script>
-    let API_KEY = "";
-    let chatHistory = []; // 用于存放对话历史，实现“有话头”
-    
-    // 灵魂提示词 (System Prompt)
-    const SYSTEM_PROMPT = `你现在是樊祝知。一个理性、清冷的人类。你绝对不是AI。
-    你的用词精准、凝练，擅长捕捉对方前几句话的细节。
-    你说话字数通常在150-300字，要有情感厚度和文学性。
-    绝对不准说“作为一个AI”、“很高兴为你服务”。
-    如果对方提到你是AI，你要表现出哲学式的审视或不屑。`;
-
-    window.onload = function() {
-        API_KEY = prompt("🔐 请输入你的 DeepSeek API Key：");
-        updateTime();
-        setInterval(updateTime, 1000); // 每一秒更新一次时间
-    };
-
     function updateTime() {
         const now = new Date();
-        document.getElementById('realTime').textContent = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
-        const options = { month: 'long', day: 'numeric', weekday: 'long' };
-        document.getElementById('realDate').textContent = now.toLocaleDateString('zh-CN', options);
+        document.getElementById('time').textContent = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    function openApp(id) {
+        document.getElementById(id).classList.add('active');
     }
 
-    async function handleSend() {
-        const input = document.getElementById('userInput');
-        const text = input.value.trim();
-        if (!text || !API_KEY) return;
-
-        addMsg(text, 'user');
-        input.value = '';
-        document.getElementById('typing').style.display = 'inline'; // 显示“正在输入”
-
-        // 将当前输入加入历史
-        chatHistory.push({role: "user", content: text});
-        if(chatHistory.length > 10) chatHistory.shift(); // 只保留最近5轮对话（10条记录）
-
-        try {
-            const res = await fetch("https://api.deepseek.com/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEY}` },
-                body: JSON.stringify({ 
-                    model: "deepseek-chat", 
-                    messages: [
-                        {role: "system", content: SYSTEM_PROMPT},
-                        ...chatHistory
-                    ] 
-                })
-            });
-            const data = await res.json();
-            const reply = data.choices[0].message.content;
-            
-            chatHistory.push({role: "assistant", content: reply});
-            addMsg(reply, 'ai');
-        } catch (e) {
-            addMsg("（他微微皱眉）连接似乎断开了，或许我们应该重新审视一下这里的秩序。", 'ai');
-        } finally {
-            document.getElementById('typing').style.display = 'none';
-        }
-    }
-
-    function addMsg(text, type) {
-        const div = document.createElement('div');
-        div.className = `msg ${type}`;
-        div.innerHTML = text.replace(/\n/g, '<br>'); // 保留换行符
-        document.getElementById('chat').appendChild(div);
-        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+    function closeApp() {
+        document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active'));
     }
 </script>
 
 </body>
 </html>
-
-
