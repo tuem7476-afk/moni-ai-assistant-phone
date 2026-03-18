@@ -5,248 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>我的 AI 助手</title>
     <style>
-        /* 全局修正：确保背景不滚动，防止偏移 */
-        html, body { 
-            height: 100%; 
-            margin: 0; 
-            padding: 0; 
-            overflow: hidden; 
-            background-color: #ededed; 
-        }
-
-        body { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            font-family: -apple-system, sans-serif; 
-        }
+        /* 核心修复：锁定屏幕，不许乱跑 */
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #ededed; }
         
-        /* 手机容器修正：使用百分比高度防止溢出 */
+        /* 手机容器 */
         #phone { 
-            width: 100vw; 
-            max-width: 414px; 
-            height: 100%; /* 填满剩余空间 */
-            max-height: 100vh;
-            background: #f3f3f3; 
-            display: flex; 
-            flex-direction: column; 
-            position: relative; 
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            margin: 0 auto;
+            display: flex; flex-direction: column; 
+            width: 100vw; height: 100%; 
+            max-width: 450px; margin: 0 auto; 
+            background: #f3f3f3; position: relative;
         }
 
-        /* 顶部状态栏：给灵动岛留出呼吸空间 */
-        .status-bar { 
-            height: 44px; 
-            padding: 0 16px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            position: relative;
-            background: #ededed;
-            z-index: 10;
-        }
+        /* 顶部装饰栏 */
+        .status-bar { height: 40px; display: flex; justify-content: center; align-items: center; background: #ededed; }
+        .island { width: 100px; height: 24px; background: #000; border-radius: 12px; }
 
-        .dynamic-island { 
-            width: 110px; 
-            height: 25px; 
-            background: #000; 
-            border-radius: 15px; 
-            position: absolute; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            top: 10px; 
-        }
+        /* 标题栏 */
+        .header { padding: 10px; text-align: center; font-weight: bold; border-bottom: 1px solid #ddd; background: #ededed; }
 
-        /* 标题栏修正 */
-        .header { 
-            background: #ededed; 
-            padding: 10px 15px; 
-            text-align: center; 
-            font-size: 17px; 
-            font-weight: 600; 
-            border-bottom: 1px solid #dbdbdb; 
-        }
+        /* 聊天区域 */
+        #chat { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 
-        /* 聊天区：确保它是唯一可以滚动的 */
-        #chat { 
-            flex: 1; 
-            padding: 15px; 
-            overflow-y: auto; 
-            background: #ededed; 
-            -webkit-overflow-scrolling: touch; /* 让滑动更顺滑 */
-        }
+        /* 气泡样式 */
+        .msg { max-width: 80%; padding: 10px; border-radius: 8px; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
+        .ai { align-self: flex-start; background: #fff; color: #000; }
+        .user { align-self: flex-end; background: #95ec69; color: #000; }
 
-        /* 气泡样式微调 */
-        .msg-row { display: flex; margin-bottom: 12px; }
-        .msg { 
-            max-width: 75%; 
-            padding: 10px; 
-            border-radius: 8px; 
-            font-size: 15px; 
-            word-wrap: break-word; 
-            position: relative;
-        }
-        .ai-row { justify-content: flex-start; }
-        .ai-msg { background: #fff; margin-left: 10px; }
-        .user-row { justify-content: flex-end; }
-        .user-msg { background: #95ec69; margin-right: 10px; }
-
-        /* 底部输入框修正：解决手机键盘弹起的问题 */
+        /* 底部输入框：解决遮挡关键 */
         .footer { 
-            background: #f7f7f7; 
-            padding: 10px 15px; 
-            display: flex; 
-            align-items: center; 
-            border-top: 1px solid #dbdbdb;
-            /* 适配全面屏底部的安全区域 */
+            padding: 10px; background: #f7f7f7; border-top: 1px solid #ddd;
+            display: flex; gap: 8px; 
             padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
         }
-
-        input { 
-            flex: 1; 
-            border: none; 
-            padding: 10px; 
-            border-radius: 6px; 
-            background: #fff; 
-            font-size: 16px;
-            outline: none;
-        }
-
-        button { 
-            background: #07c160; 
-            color: white; 
-            border: none; 
-            padding: 10px 15px; 
-            margin-left: 10px; 
-            border-radius: 4px; 
-            font-weight: bold;
-        }
+        input { flex: 1; border: none; padding: 10px; border-radius: 4px; font-size: 16px; outline: none; }
+        button { background: #07c160; color: white; border: none; padding: 0 15px; border-radius: 4px; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="phone">
-        <div class="status-bar">
-            <span>13:55</span>
-            <div class="dynamic-island"></div>
-            <span>5G 🔋</span>
-        </div>
-        <div class="header">DeepSeek 助手</div>
-        <div id="chat">
-            <div class="msg-row ai-row">
-                <div class="msg ai-msg">你好！现在布局应该正常啦。请输入 API Key 开始聊吧！</div>
-            </div>
-        </div>
-        <div class="footer">
-            <input type="text" id="userInput" placeholder="输入消息...">
-            <button onclick="handleSend()">发送</button>
-        </div>
-    </div>
 
-    <script>
-        // ... (保持之前的 JavaScript 逻辑不变) ...
-    </script>
-</body>
-</html>
-        addMessage(text, 'user');
+<div id="phone">
+    <div class="status-bar"><div class="island"></div></div>
+    <div class="header">DeepSeek 助手</div>
+    <div id="chat">
+        <div class="msg ai">请先输入 API Key 开启对话。</div>
+    </div>
+    <div class="footer">
+        <input type="text" id="userInput" placeholder="输入消息...">
+        <button onclick="handleSend()">发送</button>
+    </div>
+</div>
+
+<script>
+    let API_KEY = "";
+    window.onload = function() {
+        API_KEY = prompt("🔐 请输入你的 DeepSeek API Key：");
+    };
+
+    async function handleSend() {
+        const input = document.getElementById('userInput');
+        const chat = document.getElementById('chat');
+        const text = input.value.trim();
+        if (!text || !API_KEY) return;
+
+        // 添加用户消息
+        addMsg(text, 'user');
         input.value = '';
-        btn.disabled = true;
 
         try {
-            // 2. 调用 DeepSeek API
-            const response = await fetch("https://api.deepseek.com/chat/completions", {
+            const res = await fetch("https://api.deepseek.com/chat/completions", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "deepseek-chat", 
-                    messages: [{ role: "user", content: text }]
-                })
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEY}` },
+                body: JSON.stringify({ model: "deepseek-chat", messages: [{role: "user", content: text}] })
             });
-
-            const data = await response.json();
-            const aiReply = data.choices[0].message.content;
-
-            // 3. 添加 AI 消息到界面
-            addMessage(aiReply, 'ai');
-        } catch (error) {
-            addMessage("😥 哎呀，API 连接出错了，检查一下 Key 吧！", 'ai');
-            console.error(error);
-        } finally {
-            btn.disabled = false;
+            const data = await res.json();
+            addMsg(data.choices[0].message.content, 'ai');
+        } catch (e) {
+            addMsg("连接失败，请检查 Key。", 'ai');
         }
     }
 
-    function addMessage(text, role) {
-        const row = document.createElement('div');
-        row.className = `msg-row ${role}-row`;
-        
-        const msg = document.createElement('div');
-        msg.className = `msg ${role}-msg`;
-        msg.textContent = text;
-        
-        row.appendChild(msg);
-        chatDiv.appendChild(row);
-        chatDiv.scrollTop = chatDiv.scrollHeight; // 自动到底部
+    function addMsg(text, type) {
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.textContent = text;
+        document.getElementById('chat').appendChild(div);
+        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
     }
-
-    // 回车发送
-    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
 </script>
 
 </body>
 </html>
-        }
-    </style>
-</head>
-<body>
 
-    <div id="phone-container">
-        <div class="header">🤖 我的AI助手</div>
-        
-        <div id="chat">
-            <div class="msg ai">你好！我是你的AI助手。你想聊点什么？</div>
-        </div>
-
-        <div class="input-area">
-            <input type="text" id="input" placeholder="按回车或点发送...">
-            <button onclick="sendMessage()">发送</button>
-        </div>
-    </div>
-
-    <script>
-        function sendMessage() {
-            const input = document.getElementById('input');
-            const chat = document.getElementById('chat');
-            const message = input.value.trim();
-            
-            if (!message) return; // 如果是空的就不发送
-
-            // 显示用户消息
-            const userMsg = document.createElement('div');
-            userMsg.className = 'msg user';
-            userMsg.textContent = message;
-            chat.appendChild(userMsg);
-            
-            input.value = '';
-            chat.scrollTop = chat.scrollHeight; // 自动滚到底部
-            
-            // 模拟AI回复
-            setTimeout(() => {
-                const aiMsg = document.createElement('div');
-                aiMsg.className = 'msg ai';
-                aiMsg.textContent = '我已经收到你的消息了！现在需要设置后端 API 才能真的对话。';
-                chat.appendChild(aiMsg);
-                chat.scrollTop = chat.scrollHeight;
-            }, 600);
-        }
-        
-        // 按回车发送
-        document.getElementById('input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-    </script>
-</body>
-</html>
