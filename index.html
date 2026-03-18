@@ -3,106 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>微信对话模拟 (安全版)</title>
+    <title>我的 AI 助手</title>
     <style>
-        /* 全局基础：模拟手机大背景 */
-        body { background-color: #ededed; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* 全局修正：确保背景不滚动，防止偏移 */
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background-color: #ededed; 
+        }
+
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-family: -apple-system, sans-serif; 
+        }
         
-        /* 手机容器：像图 4 一样有圆角和阴影 */
-        #phone { width: 100%; max-width: 375px; height: 100vh; background: #f3f3f3; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.15); border-radius: 20px; overflow: hidden; }
-        @media (max-width: 414px) { #phone { border-radius: 0; } } /* 在真手机上全屏 */
+        /* 手机容器修正：使用百分比高度防止溢出 */
+        #phone { 
+            width: 100vw; 
+            max-width: 414px; 
+            height: 100%; /* 填满剩余空间 */
+            max-height: 100vh;
+            background: #f3f3f3; 
+            display: flex; 
+            flex-direction: column; 
+            position: relative; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
 
-        /* 1. 顶部状态栏：高仿图 4 效果 */
-        .status-bar { height: 44px; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; color: #000; font-size: 14px; position: absolute; top: 0; width: 100%; box-sizing: border-box; z-index: 10; font-weight: 500;}
-        .dynamic-island { width: 120px; height: 25px; background: #000; border-radius: 12.5px; position: absolute; left: 50%; transform: translateX(-50%); top: 8px; } /* 模拟灵动岛 */
-        .status-left, .status-right { display: flex; align-items: center; gap: 4px; }
-        .battery { width: 22px; height: 11px; border: 1px solid #000; border-radius: 2px; position: relative; padding: 1px; }
-        .battery::after { content: ""; width: 80%; height: 100%; background: #000; display: block; }
-        .battery::before { content: ""; width: 2px; height: 4px; background: #000; position: absolute; right: -3px; top: 3px; border-radius: 0 1px 1px 0; }
+        /* 顶部状态栏：给灵动岛留出呼吸空间 */
+        .status-bar { 
+            height: 44px; 
+            padding: 0 16px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: relative;
+            background: #ededed;
+            z-index: 10;
+        }
 
-        /* 2. 微信导航栏 */
-        .header { background: #ededed; color: #000; padding: 50px 15px 10px; text-align: center; font-size: 17px; font-weight: 600; border-bottom: 1px solid #dbdbdb; position: relative; z-index: 5; }
-        .header::before { content: "‹"; position: absolute; left: 15px; bottom: 8px; font-size: 26px; color: #000; }
+        .dynamic-island { 
+            width: 110px; 
+            height: 25px; 
+            background: #000; 
+            border-radius: 15px; 
+            position: absolute; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            top: 10px; 
+        }
 
-        /* 3. 聊天区域 */
-        #chat { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; background: #ededed; padding-bottom: 70px; }
+        /* 标题栏修正 */
+        .header { 
+            background: #ededed; 
+            padding: 10px 15px; 
+            text-align: center; 
+            font-size: 17px; 
+            font-weight: 600; 
+            border-bottom: 1px solid #dbdbdb; 
+        }
 
-        /* 通用消息结构 */
-        .msg-row { display: flex; margin-bottom: 18px; width: 100%; align-items: flex-start;}
-        .msg { max-width: 70%; padding: 10px 12px; border-radius: 6px; font-size: 15.5px; line-height: 1.5; position: relative; word-wrap: break-word; }
+        /* 聊天区：确保它是唯一可以滚动的 */
+        #chat { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            background: #ededed; 
+            -webkit-overflow-scrolling: touch; /* 让滑动更顺滑 */
+        }
 
-        /* AI 消息 (左侧白色) */
+        /* 气泡样式微调 */
+        .msg-row { display: flex; margin-bottom: 12px; }
+        .msg { 
+            max-width: 75%; 
+            padding: 10px; 
+            border-radius: 8px; 
+            font-size: 15px; 
+            word-wrap: break-word; 
+            position: relative;
+        }
         .ai-row { justify-content: flex-start; }
-        .ai-msg { background: #ffffff; color: #000; margin-left: 10px; }
-        .ai-msg::before { content: ""; position: absolute; left: -10px; top: 12px; border: 5px solid transparent; border-right-color: #ffffff; }
-
-        /* 用户消息 (右侧绿色) */
+        .ai-msg { background: #fff; margin-left: 10px; }
         .user-row { justify-content: flex-end; }
-        .user-msg { background: #95ec69; color: #000; margin-right: 10px; }
-        .user-msg::after { content: ""; position: absolute; right: -10px; top: 12px; border: 5px solid transparent; border-left-color: #95ec69; }
+        .user-msg { background: #95ec69; margin-right: 10px; }
 
-        /* 4. 底部输入框 */
-        .footer { background: #f7f7f7; padding: 10px 15px; display: flex; align-items: center; border-top: 1px solid #dbdbdb; position: absolute; bottom: 0; width: 100%; box-sizing: border-box; padding-bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 5; }
-        input { flex: 1; border: none; padding: 10px 14px; border-radius: 6px; font-size: 16px; outline: none; background: #ffffff; }
-        button { background: #07c160; color: white; border: none; padding: 10px 20px; margin-left: 10px; border-radius: 4px; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 15px;}
-        button:disabled { background: #e1e1e1; color: #b1b1b1; }
+        /* 底部输入框修正：解决手机键盘弹起的问题 */
+        .footer { 
+            background: #f7f7f7; 
+            padding: 10px 15px; 
+            display: flex; 
+            align-items: center; 
+            border-top: 1px solid #dbdbdb;
+            /* 适配全面屏底部的安全区域 */
+            padding-bottom: calc(10px + env(safe-area-inset-bottom)); 
+        }
+
+        input { 
+            flex: 1; 
+            border: none; 
+            padding: 10px; 
+            border-radius: 6px; 
+            background: #fff; 
+            font-size: 16px;
+            outline: none;
+        }
+
+        button { 
+            background: #07c160; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            margin-left: 10px; 
+            border-radius: 4px; 
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-
-<div id="phone">
-    <div class="status-bar">
-        <div class="status-left">13:55</div>
-        <div class="dynamic-island"></div>
-        <div class="status-right">
-            <span>5G</span>
-            <div class="battery"></div>
+    <div id="phone">
+        <div class="status-bar">
+            <span>13:55</span>
+            <div class="dynamic-island"></div>
+            <span>5G 🔋</span>
+        </div>
+        <div class="header">DeepSeek 助手</div>
+        <div id="chat">
+            <div class="msg-row ai-row">
+                <div class="msg ai-msg">你好！现在布局应该正常啦。请输入 API Key 开始聊吧！</div>
+            </div>
+        </div>
+        <div class="footer">
+            <input type="text" id="userInput" placeholder="输入消息...">
+            <button onclick="handleSend()">发送</button>
         </div>
     </div>
 
-    <div class="header">DeepSeek 助手</div>
-
-    <div id="chat">
-        <div class="msg-row ai-row">
-            <div class="msg ai-msg">你好！为了账号安全，请先在下方输入 API Key，然后我就能帮你回答了。</div>
-        </div>
-    </div>
-
-    <div class="footer">
-        <input type="text" id="userInput" placeholder="请输入消息...">
-        <button id="sendBtn" onclick="handleSend()">发送</button>
-    </div>
-</div>
-
-<script>
-    // 【关键安全设计】
-    // 代码里绝不写死 Key！
-    let API_KEY = ""; 
-
-    // 页面加载后立即弹窗管你要 Key
-    window.onload = function() {
-        API_KEY = prompt("🔐 请输入你的 DeepSeek API Key (仅保存在当前浏览器内存，公开代码 100% 安全)：");
-        if (API_KEY) {
-            addMessage("成功接通 API，可以开始对话了！", 'ai');
-        } else {
-            addMessage("⚠️ 没有输入 Key，对话将无法进行哦。", 'ai');
-        }
-    };
-
-    const chatDiv = document.getElementById('chat');
-    const input = document.getElementById('userInput');
-    const btn = document.getElementById('sendBtn');
-
-    async function handleSend() {
-        if (!API_KEY) {
-            alert("请先刷新页面并输入 API Key 吧！");
-            return;
-        }
-
-        const text = input.value.trim();
-        if (!text) return;
-
-        // 1. 添加用户消息到界面
+    <script>
+        // ... (保持之前的 JavaScript 逻辑不变) ...
+    </script>
+</body>
+</html>
         addMessage(text, 'user');
         input.value = '';
         btn.disabled = true;
