@@ -3,54 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Juemeng's WebOS</title>
+    <title>Juemeng's WebPhone</title>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         body, html { height: 100%; margin: 0; overflow: hidden; font-family: -apple-system, sans-serif; background: #000; }
         
         #phone-container {
             width: 100vw; height: 100%; max-width: 450px; margin: 0 auto;
-            position: relative; background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=1000') center/cover;
-            display: flex; flex-direction: column;
+            position: relative; background: url('https://images.unsplash.com/photo-1494548162494-384bba4ab999?auto=format&fit=crop&q=80&w=1000') center/cover;
+            display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
 
-        /* 顶部云朵时间 */
-        .status-bar { padding: 40px 20px 20px; text-align: center; color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        #time { font-size: 50px; font-weight: 200; }
-        #date { font-size: 16px; opacity: 0.8; }
+        /* 顶部时钟 Vibe */
+        .status-bar { padding: 60px 20px 20px; text-align: center; color: white; text-shadow: 0 2px 15px rgba(0,0,0,0.5); }
+        #time { font-size: 64px; font-weight: 200; letter-spacing: -2px; }
+        #date { font-size: 18px; opacity: 0.9; margin-top: 5px; }
 
-        /* 桌面图标网格 */
-        .app-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; padding: 20px;
-            flex: 1; align-content: start;
-        }
+        /* 桌面图标 */
+        .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; padding: 30px; flex: 1; align-content: start; }
         .app-icon { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
         .icon-box { 
             width: 60px; height: 60px; border-radius: 14px; margin-bottom: 8px;
-            display: flex; align-items: center; justify-content: center; font-size: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center; font-size: 32px;
+            backdrop-filter: blur(15px); border: 0.5px solid rgba(255,255,255,0.2);
         }
-        .app-label { color: white; font-size: 12px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .app-label { color: white; font-size: 12px; font-weight: 500; }
 
-        /* App 窗口层 */
+        /* App 容器层 */
         .app-window {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #ededed; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100; display: flex; flex-direction: column;
+            background: #ededed; transform: scale(0.8) translateY(100%); opacity: 0; pointer-events: none;
+            z-index: 100; display: flex; flex-direction: column; border-radius: 30px; overflow: hidden;
         }
-        .app-window.active { transform: translateY(0); }
+        .app-window.active { transform: scale(1) translateY(0); opacity: 1; pointer-events: auto; border-radius: 0; }
         
-        /* 虚拟返回键 */
-        .home-indicator {
-            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-            width: 120px; height: 5px; background: rgba(255,255,255,0.5); border-radius: 5px;
-            z-index: 1000; cursor: pointer;
-        }
-        .app-window .home-indicator { background: rgba(0,0,0,0.2); }
+        /* 微信界面专有样式 */
+        .wechat-header { padding: 12px; background: #2c2c2c; color: #fff; text-align: center; font-size: 16px; position: relative; }
+        #typing { font-size: 11px; color: #07c160; display: none; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .chat-area { flex: 1; padding: 15px; overflow-y: auto; background: #ededed; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* 气泡 */
+        .msg { display: flex; max-width: 85%; }
+        .msg.ai { align-self: flex-start; }
+        .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+        .bubble { padding: 10px 14px; border-radius: 8px; font-size: 15px; line-height: 1.5; position: relative; }
+        .ai .bubble { background: #fff; color: #000; border: 0.5px solid #ddd; margin-left: 10px; }
+        .user .bubble { background: #95ec69; color: #000; border: 0.5px solid #84d45d; margin-right: 10px; }
+        .avatar { width: 38px; height: 38px; border-radius: 4px; background: #ccc; flex-shrink: 0; }
 
-        /* 聊天界面简易样式 */
-        .app-header { padding: 15px; background: #f7f7f7; text-align: center; font-weight: bold; border-bottom: 1px solid #ddd; }
-        .chat-content { flex: 1; padding: 15px; overflow-y: auto; }
+        /* 微信输入框 */
+        .wechat-input { padding: 10px; background: #f7f7f7; border-top: 0.5px solid #ddd; display: flex; gap: 8px; padding-bottom: 25px; }
+        .wechat-input input { flex: 1; border: none; padding: 10px; border-radius: 4px; background: #fff; font-size: 16px; outline: none; }
+        .wechat-input button { background: #07c160; color: white; border: none; padding: 0 15px; border-radius: 4px; font-weight: bold; }
+
+        /* Home 键 */
+        .home-bar {
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 5px; background: rgba(255,255,255,0.5); border-radius: 5px; z-index: 1001; cursor: pointer;
+        }
+        .app-window .home-bar { background: rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -58,59 +69,131 @@
 <div id="phone-container">
     <div class="status-bar">
         <div id="time">00:00</div>
-        <div id="date">3月18日 星期三</div>
+        <div id="date">--月--日 星期--</div>
     </div>
 
     <div class="app-grid">
         <div class="app-icon" onclick="openApp('wechat')">
-            <div class="icon-box" style="background: #07c160;">💬</div>
+            <div class="icon-box" style="background: rgba(7, 193, 96, 0.9);">💬</div>
             <div class="app-label">微信</div>
         </div>
-        <div class="app-icon" onclick="openApp('qq')">
-            <div class="icon-box" style="background: #12b7f5;">🐧</div>
-            <div class="app-label">QQ</div>
+        <div class="app-icon" onclick="alert('朋友圈功能开发中，敬请期待...')">
+            <div class="icon-box" style="background: rgba(255, 255, 255, 0.2);">🎨</div>
+            <div class="app-label">朋友圈</div>
         </div>
         <div class="app-icon" onclick="openApp('settings')">
-            <div class="icon-box" style="background: #95a5a6;">⚙️</div>
+            <div class="icon-box" style="background: rgba(149, 165, 166, 0.8);">⚙️</div>
             <div class="app-label">设置</div>
         </div>
     </div>
 
     <div id="wechat" class="app-window">
-        <div class="app-header">樊祝知</div>
-        <div class="chat-content">
-            <p style="color:#888; text-align:center; font-size:12px;">这里就是你之前玩的聊天界面...</p>
+        <div class="wechat-header">
+            樊祝知
+            <div id="typing">对方正在输入...</div>
         </div>
-        <div class="home-indicator" onclick="closeApp()"></div>
+        <div class="chat-area" id="chatArea">
+            <div class="msg ai">
+                <div class="avatar" style="background-image: url('https://api.dicebear.com/7.x/avataaars/svg?seed=Fan'); background-size: cover;"></div>
+                <div class="bubble">你好。在这个虚拟的逻辑空间里相遇，倒也符合某种偶然性。今天想聊些什么？</div>
+            </div>
+        </div>
+        <div class="wechat-input">
+            <input type="text" id="userInput" placeholder="发送消息..." onkeypress="if(event.keyCode==13) sendToFZZ()">
+            <button onclick="sendToFZZ()">发送</button>
+        </div>
+        <div class="home-bar" onclick="closeApp()"></div>
     </div>
 
-    <div id="settings" class="app-window" style="background: #fff;">
-        <div class="app-header">系统设置</div>
-        <div style="padding: 20px;">
-            <label>API Key (DeepSeek):</label>
-            <input type="password" style="width:100%; padding:10px; margin:10px 0; border:1px solid #ddd; border-radius:5px;">
-            <button style="width:100%; padding:10px; background:#07c160; color:white; border:none; border-radius:5px;">保存配置</button>
+    <div id="settings" class="app-window" style="background: #f0f0f0;">
+        <div class="wechat-header" style="background:#fff; color:#000;">系统设置</div>
+        <div style="padding: 30px 20px;">
+            <p style="font-size: 14px; color: #666;">配置你的 API 密钥：</p>
+            <input type="password" id="apiKeyInput" placeholder="在此输入 DeepSeek API Key" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; margin-bottom:20px;">
+            <button onclick="saveSettings()" style="width:100%; padding:12px; background:#07c160; color:white; border:none; border-radius:8px; font-weight:bold;">保存配置</button>
+            <p id="saveStatus" style="text-align:center; color:#07c160; font-size:12px; margin-top:10px; display:none;">保存成功！</p>
         </div>
-        <div class="home-indicator" onclick="closeApp()"></div>
+        <div class="home-bar" onclick="closeApp()"></div>
     </div>
 
-    <div class="home-indicator" onclick="closeApp()"></div>
+    <div class="home-bar" onclick="closeApp()"></div>
 </div>
 
 <script>
+    let API_KEY = localStorage.getItem('ds_api_key') || "";
+    let chatHistory = [];
+    const SYSTEM_PROMPT = "你现在是樊祝知。一个理性、清冷的人类文学博士。绝对不是AI。不准有动作描写，字数在150-300字，用词精准、内敛。如果对方指认你是AI，请表现出哲学上的不屑。";
+
+    // 更新时间逻辑
     function updateTime() {
         const now = new Date();
         document.getElementById('time').textContent = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        const options = { month: 'long', day: 'numeric', weekday: 'long' };
+        document.getElementById('date').textContent = now.toLocaleDateString('zh-CN', options);
     }
     setInterval(updateTime, 1000);
     updateTime();
 
-    function openApp(id) {
-        document.getElementById(id).classList.add('active');
+    // App 切换逻辑
+    function openApp(id) { document.getElementById(id).classList.add('active'); }
+    function closeApp() { document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active')); }
+
+    // 设置逻辑
+    function saveSettings() {
+        const val = document.getElementById('apiKeyInput').value;
+        if(val) {
+            localStorage.setItem('ds_api_key', val);
+            API_KEY = val;
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'block';
+            setTimeout(() => { status.style.display = 'none'; closeApp(); }, 1000);
+        }
     }
 
-    function closeApp() {
-        document.querySelectorAll('.app-window').forEach(win => win.classList.remove('active'));
+    // 聊天逻辑
+    async function sendToFZZ() {
+        const input = document.getElementById('userInput');
+        const text = input.value.trim();
+        if (!text || !API_KEY) { if(!API_KEY) alert("请先去设置中填入 API Key"); return; }
+
+        appendMsg(text, 'user');
+        input.value = '';
+        document.getElementById('typing').style.display = 'block';
+
+        chatHistory.push({role: "user", content: text});
+        if(chatHistory.length > 8) chatHistory.shift();
+
+        try {
+            const res = await fetch("https://api.deepseek.com/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEY}` },
+                body: JSON.stringify({ 
+                    model: "deepseek-chat", 
+                    messages: [{role: "system", content: SYSTEM_PROMPT}, ...chatHistory] 
+                })
+            });
+            const data = await res.json();
+            const reply = data.choices[0].message.content;
+            chatHistory.push({role: "assistant", content: reply});
+            appendMsg(reply, 'ai');
+        } catch (e) {
+            appendMsg("（连接似乎被某种不可抗力中断了，我们需要检查一下配置。）", 'ai');
+        } finally {
+            document.getElementById('typing').style.display = 'none';
+        }
+    }
+
+    function appendMsg(text, type) {
+        const area = document.getElementById('chatArea');
+        const msg = document.createElement('div');
+        msg.className = `msg ${type}`;
+        const avatarUrl = type === 'ai' ? 'https://api.dicebear.com/7.x/avataaars/svg?seed=Fan' : 'https://api.dicebear.com/7.x/avataaars/svg?seed=Me';
+        msg.innerHTML = `
+            <div class="avatar" style="background-image: url('${avatarUrl}'); background-size: cover;"></div>
+            <div class="bubble">${text.replace(/\n/g, '<br>')}</div>
+        `;
+        area.appendChild(msg);
+        area.scrollTop = area.scrollHeight;
     }
 </script>
 
